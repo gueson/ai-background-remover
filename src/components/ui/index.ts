@@ -1,4 +1,7 @@
-export { Button } from './Button';
-export { Card } from './Card';
-export { CardHeader } from './CardHeader';
-export { CardContent } from './CardContent';
+'use client';
+
+export { default as Button } from './Button';
+export { default as Card } from './Card';
+export { default as CardHeader } from './CardHeader';
+export { default as CardContent } from './CardContent';
+export { default as CardTitle } from './CardTitle';

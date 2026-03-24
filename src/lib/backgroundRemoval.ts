@@ -1,18 +1,8 @@
 'use client';
 
-import { createClient, removeBackground } from '@imgly/background-removal';
+import { removeBackground } from '@imgly/background-removal';
 
-let client: ReturnType<typeof createClient> | null = null;
-
-export async function getBackgroundRemovalClient() {
-  if (!client) {
-    client = await createClient();
-  }
-  return client;
-}
-
-export async function removeBackground(file: File): Promise<Blob> {
-  const client = await getBackgroundRemovalClient();
-  const result = await removeBackground({ image: file }, client);
+export async function removeImageBackground(file: File): Promise<Blob> {
+  const result = await removeBackground({ image: file });
   return result;
 }

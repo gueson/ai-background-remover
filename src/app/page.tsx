@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { UploadArea } from "@/components/UploadArea";
+import UploadArea from "@/components/UploadArea";
 import ImagePreview from "@/components/ImagePreview";
 import FeatureCard from "@/components/FeatureCard";
 import FAQSection from "@/components/FAQSection";
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card2: "summary",
+    card: "summary",
     title: "AI Background Remover",
     description: "Privacy-first image background removal",
     images: [
@@ -43,6 +43,10 @@ export const metadata: Metadata = {
       },
     ],
   },
+  themeColor: "hsl(var(--primary))",
+};
+
+export const viewport = {
   themeColor: "hsl(var(--primary))",
 };
 

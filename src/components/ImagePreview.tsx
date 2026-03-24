@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 interface ImagePreviewProps {
   original: string;
@@ -10,7 +10,7 @@ interface ImagePreviewProps {
   onReset: () => void;
 }
 
-export function ImagePreview({
+export default function ImagePreview({
   original,
   processed,
   onDownload,
