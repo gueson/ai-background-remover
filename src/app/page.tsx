@@ -125,19 +125,6 @@ export default function Home() {
       {/* FAQ */}
       <FAQSection />
 
-      {/* Call to Action */}
-      <section className="text-center mt-16 py-8 mx-4 md:mx-8 bg-blue-50 rounded-xl shadow max-w-5xl mx-auto">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Ready to try?
-          </h2>
-          <p className="text-lg text-gray-600 mb-6">
-            Upload a photo and see the magic happen instantly.
-          </p>
-          <UploadArea />
-        </div>
-      </section>
-
       <footer className="mt-16 py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
         © {new Date().getFullYear()} AI Background Remover. All rights reserved.
       </footer>
