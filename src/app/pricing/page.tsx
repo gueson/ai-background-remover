@@ -1,13 +1,19 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-
-export const metadata: Metadata = {
-  title: 'Pricing – AI Background Remover',
-  description: 'Simple, transparent pricing for our AI-powered background removal tool.',
-};
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 
 export default function PricingPage() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', message: '' });
+
+  const showModal = (title: string, message: string) => {
+    setModalContent({ title, message });
+    setModalOpen(true);
+  };
+
   const plans = [
     {
       name: 'Free',
@@ -23,6 +29,7 @@ export default function PricingPage() {
       ],
       cta: 'Get Started',
       popular: false,
+      onCtaClick: () => showModal('Get Started', 'You can start using the tool immediately! No signup required. Your free plan includes 10 images per month.'),
     },
     {
       name: 'Pro',
@@ -39,6 +46,7 @@ export default function PricingPage() {
       ],
       cta: 'Start Free Trial',
       popular: true,
+      onCtaClick: () => showModal('Pro Plan', 'Pro features are coming soon! This will include unlimited images, API access, and priority processing. Leave your email to get notified when it launches.'),
     },
     {
       name: 'Enterprise',
@@ -55,6 +63,7 @@ export default function PricingPage() {
       ],
       cta: 'Contact Sales',
       popular: false,
+      onCtaClick: () => showModal('Enterprise', 'Enterprise solutions are available for organizations needing custom quotas, dedicated support, and on-premise deployment. Contact us for pricing.'),
     },
   ];
 
@@ -152,6 +161,7 @@ export default function PricingPage() {
                 ))}
               </ul>
               <Button
+                onClick={plan.onCtaClick}
                 className="w-full"
                 variant={plan.popular ? 'primary' : 'outline'}
               >
@@ -237,9 +247,28 @@ export default function PricingPage() {
           <p className="text-lg text-gray-600 mb-6">
             Our team is here to help. Contact us anytime.
           </p>
-          <Button variant="outline">Contact Support</Button>
+          <Button variant="outline" onClick={() => showModal('Contact Support', 'You can reach us at support@removebg.example.com. We typically respond within 24 hours.')}>
+            Contact Support
+          </Button>
         </div>
       </section>
+
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>{modalContent.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-6">{modalContent.message}</p>
+              <Button onClick={() => setModalOpen(false)} className="w-full">
+                Got it
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
