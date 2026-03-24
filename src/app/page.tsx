@@ -53,7 +53,7 @@ export const viewport = {
 export default function Home() {
   return (
     <>
-      <header className="flex justify-between items-center py-6">
+      <header className="flex justify-between items-center py-6 px-4 md:px-8 max-w-7xl mx-auto">
         <a href="/" className="text-3xl font-bold text-gray-900">
           RemoveBG
         </a>
@@ -65,7 +65,7 @@ export default function Home() {
       </header>
 
       {/* Value Proposition */}
-      <section className="text-center mx-auto max-w-3xl py-12">
+      <section className="text-center mx-auto max-w-3xl py-12 px-4">
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-4">
           Remove Image Backgrounds Instantly
         </h1>
@@ -76,8 +76,8 @@ export default function Home() {
       </section>
 
       {/* Feature Highlights */}
-      <section className="py-12">
-        <h2 className="text-2xl font-bold text-gray-900 text-center">
+      <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
           Why Choose Us?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -126,7 +126,7 @@ export default function Home() {
       <FAQSection />
 
       {/* Call to Action */}
-      <section className="text-center mt-16 py-8 bg-blue-50 rounded-xl shadow">
+      <section className="text-center mt-16 py-8 mx-4 md:mx-8 bg-blue-50 rounded-xl shadow max-w-5xl mx-auto">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Ready to try?
@@ -138,7 +138,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mt-16 py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200">
+      <footer className="mt-16 py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
         © {new Date().getFullYear()} AI Background Remover. All rights reserved.
       </footer>
     </>
