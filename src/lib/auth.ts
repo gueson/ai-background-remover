@@ -24,11 +24,17 @@ export interface MeResponse {
   };
 }
 
-export async function googleAuth(idToken: string): Promise<AuthResponse> {
+export async function googleAuth(token: string, tokenType: 'id_token' | 'access_token' | 'code' = 'id_token'): Promise<AuthResponse> {
+  const body = tokenType === 'code'
+    ? { code: token }
+    : tokenType === 'access_token'
+    ? { access_token: token }
+    : { token };
+
   const res = await fetch(`${API_URL}/api/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: idToken }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

@@ -2,69 +2,23 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
-import { googleAuth, saveToken } from '@/lib/auth';
+
+const CALLBACK_URL = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-background-remover-tools.vercel.app'}/auth/callback`;
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [error, setError] = useState('');
+  const searchParams = useSearchParams();
+  const [error, setError] = useState(searchParams.get('error') || '');
   const [isLoading, setIsLoading] = useState(false);
 
   const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      // tokenResponse contains access_token, not id_token by default
-      // We need id_token to send to our backend
-      // Request it explicitly via token endpoint
-      setIsLoading(true);
-      setError('');
-
-      try {
-        const resp = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-            client_secret: '', // Not needed for this call
-            grant_type: 'convert_token',
-            access_token: tokenResponse.access_token,
-            token_type: 'Bearer',
-          }),
-        });
-
-        // If that fails, try a simpler approach - use the access_token 
-        // to get userinfo and combine with our backend
-        const userInfoRes = await fetch(
-          `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenResponse.access_token}`
-        );
-        const userInfo = await userInfoRes.json();
-
-        if (!userInfo.email) {
-          throw new Error('Failed to get user info from Google');
-        }
-
-        // Send access_token to backend - the backend will use Google APIs to verify
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: tokenResponse.access_token }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Authentication failed');
-        }
-
-        const data = await res.json();
-        saveToken(data.data.token);
-        router.push('/');
-      } catch (err: any) {
-        setError(err.message || 'Google login failed. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+    ux_mode: 'redirect',
+    redirectUri: CALLBACK_URL,
+    onSuccess: () => {
+      // This won't be called in redirect mode — user is redirected to callback page
     },
     onError: (error) => {
       setError(error.error_description || 'Google login failed');
@@ -94,11 +48,11 @@ export default function LoginPage() {
           <CardContent>
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
               </div>
             )}
 
-            {/* Google OAuth */}
+            {/* Google OAuth - redirect mode */}
             <Button
               variant="outline"
               className="w-full"
@@ -106,7 +60,7 @@ export default function LoginPage() {
               disabled={isLoading}
             >
               {isLoading ? (
-                'Signing in...'
+                'Redirecting...'
               ) : (
                 <>
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
