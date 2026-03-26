@@ -3,33 +3,30 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ai-background-remover-tools.vercel.app';
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-const CALLBACK_URL = `${APP_URL}/auth/callback`;
-
-function buildGoogleOAuthUrl() {
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: CALLBACK_URL,
-    response_type: 'code',
-    scope: 'openid profile email',
-    access_type: 'offline',
-  });
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-}
 
 export function LoginClient() {
   const searchParams = useSearchParams();
   const [error, setError] = useState(searchParams.get('error') || '');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Direct redirect to Google OAuth
-    window.location.href = buildGoogleOAuthUrl();
+    setError('');
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,7 +56,7 @@ export function LoginClient() {
               </div>
             )}
 
-            {/* Google OAuth - direct redirect */}
+            {/* Google OAuth via Supabase */}
             <Button
               variant="outline"
               className="w-full"
