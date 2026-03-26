@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
+import { Header } from '@/components/Header';
 
 export default function PricingPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,17 +93,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex justify-between items-center py-6 px-4 md:px-8 max-w-7xl mx-auto">
-        <Link href="/" className="text-3xl font-bold text-gray-900">
-          RemoveBG
-        </Link>
-        <nav className="flex gap-4">
-          <Link href="/features" className="text-gray-600 hover:text-primary transition">Features</Link>
-          <Link href="/pricing" className="text-primary font-medium">Pricing</Link>
-          <Link href="/login" className="text-gray-600 hover:text-primary transition">Login</Link>
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero */}
       <section className="text-center mx-auto max-w-3xl py-16 px-4">

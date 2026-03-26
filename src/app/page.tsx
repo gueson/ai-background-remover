@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Header } from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
 import ImagePreview from "@/components/ImagePreview";
 import FeatureCard from "@/components/FeatureCard";
@@ -53,16 +54,7 @@ export const viewport = {
 export default function Home() {
   return (
     <>
-      <header className="flex justify-between items-center py-6 px-4 md:px-8 max-w-7xl mx-auto">
-        <a href="/" className="text-3xl font-bold text-gray-900">
-          RemoveBG
-        </a>
-        <nav className="flex gap-4">
-          <a href="/features" className="text-gray-600 hover:text-primary transition">Features</a>
-          <a href="/pricing" className="text-gray-600 hover:text-primary transition">Pricing</a>
-          <a href="/login" className="text-gray-600 hover:text-primary transition">Login</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Value Proposition */}
       <section className="text-center mx-auto max-w-3xl py-12 px-4">

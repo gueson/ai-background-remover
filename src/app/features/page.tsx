@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
+import { Header } from '@/components/Header';
 
 export const metadata: Metadata = {
   title: 'Features – AI Background Remover',
@@ -62,17 +63,7 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex justify-between items-center py-6 px-4 md:px-8 max-w-7xl mx-auto">
-        <Link href="/" className="text-3xl font-bold text-gray-900">
-          RemoveBG
-        </Link>
-        <nav className="flex gap-4">
-          <Link href="/features" className="text-primary font-medium">Features</Link>
-          <Link href="/pricing" className="text-gray-600 hover:text-primary transition">Pricing</Link>
-          <Link href="/login" className="text-gray-600 hover:text-primary transition">Login</Link>
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero */}
       <section className="text-center mx-auto max-w-3xl py-16 px-4">
