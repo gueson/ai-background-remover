@@ -1,7 +1,15 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { AuthUser, getMe } from './auth';
+import { supabase } from './supabase';
+
+interface AuthUser {
+  id: string;
+  email: string | undefined;
+  name: string | undefined;
+  avatar: string | undefined;
+  provider: string;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -20,14 +28,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMe().then((res) => {
-      setUser(res.data.user);
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const supabaseClient = supabase;
+
+    // Get initial session
+    const getSession = async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (session?.user) {
+        const u = session.user;
+        setUser({
+          id: u.id,
+          email: u.email,
+          name: u.user_metadata?.full_name || u.user_metadata?.name,
+          avatar: u.user_metadata?.avatar_url,
+          provider: 'GOOGLE',
+        });
+      }
+      setLoading(false);
+    };
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        setUser({
+          id: u.id,
+          email: u.email,
+          name: u.user_metadata?.full_name || u.user_metadata?.name,
+          avatar: u.user_metadata?.avatar_url,
+          provider: 'GOOGLE',
+        });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    localStorage.removeItem('supabase_access_token');
+    localStorage.removeItem('supabase_refresh_token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 

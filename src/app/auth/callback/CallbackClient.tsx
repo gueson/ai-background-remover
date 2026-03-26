@@ -11,6 +11,12 @@ export function CallbackClient() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (!supabase) {
+        setError('Supabase not configured');
+        setLoading(false);
+        return;
+      }
+
       try {
         // Get the session from Supabase callback URL (handled by Supabase SDK)
         const { data: { session }, error: supabaseError } = await supabase.auth.getSession();

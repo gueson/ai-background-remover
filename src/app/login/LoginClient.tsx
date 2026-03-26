@@ -16,6 +16,12 @@ export function LoginClient() {
     setIsLoading(true);
     setError('');
 
+    if (!supabase) {
+      setError('Supabase not configured. Please contact support.');
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
