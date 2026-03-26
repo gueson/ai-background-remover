@@ -7,44 +7,56 @@ import { supabase } from '@/lib/supabase';
 export function CallbackClient() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get session from Supabase callback URL
+        // Get the session from Supabase callback URL (handled by Supabase SDK)
         const { data: { session }, error: supabaseError } = await supabase.auth.getSession();
 
-        if (supabaseError || !session) {
-          throw new Error(supabaseError?.message || 'No session received');
+        if (supabaseError) {
+          throw new Error(supabaseError.message);
         }
 
-        // Exchange Supabase access token for our backend JWT
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-service.online';
-        const res = await fetch(`${apiUrl}/api/auth/google`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            token: session.provider_token,
-            access_token: session.access_token
-          }),
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || 'Authentication failed');
+        if (!session) {
+          throw new Error('No session received from Supabase');
         }
 
-        const { data: { token, user } } = await res.json();
+        console.log('Supabase session received:', !!session.access_token);
 
-        // Store token in localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        // Store Supabase tokens in localStorage
+        localStorage.setItem('supabase_access_token', session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem('supabase_refresh_token', session.refresh_token);
+        }
+
+        // Get user info from Supabase
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError) {
+          throw new Error(userError.message);
+        }
+
+        console.log('Supabase user:', user?.email);
+
+        // Store user info
+        if (user) {
+          localStorage.setItem('user', JSON.stringify({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name,
+            avatar: user.user_metadata?.avatar_url,
+            provider: 'GOOGLE',
+          }));
+        }
 
         // Redirect to home page
         router.push('/');
       } catch (err: any) {
         console.error('Auth callback error:', err);
         setError(err.message || 'Authentication failed');
+        setLoading(false);
       }
     };
 
@@ -54,12 +66,12 @@ export function CallbackClient() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md text-center">
           <h2 className="text-xl font-bold text-red-600 mb-4">Authentication Failed</h2>
           <p className="text-gray-700 mb-4">{error}</p>
           <button
             onClick={() => router.push('/login')}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
             Back to Login
           </button>
@@ -68,12 +80,16 @@ export function CallbackClient() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-gray-600">Signing you in...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Signing you in...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
