@@ -29,15 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
+      console.log('AuthContext: supabase not initialized');
       setLoading(false);
       return;
     }
 
     const supabaseClient = supabase;
+    console.log('AuthContext: initializing with supabase');
 
     // Get initial session
     const getSession = async () => {
+      console.log('AuthContext: getting session...');
       const { data: { session } } = await supabaseClient.auth.getSession();
+      console.log('AuthContext: session:', !!session, session?.user?.email);
       
       if (session?.user) {
         const u = session.user;

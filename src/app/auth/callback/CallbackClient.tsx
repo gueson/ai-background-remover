@@ -20,6 +20,7 @@ export function CallbackClient() {
       try {
         // Get the session from Supabase callback URL (handled by Supabase SDK)
         const { data: { session }, error: supabaseError } = await supabase.auth.getSession();
+        console.log('Callback: session received', !!session, session?.user?.email);
 
         if (supabaseError) {
           throw new Error(supabaseError.message);
