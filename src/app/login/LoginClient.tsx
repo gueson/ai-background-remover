@@ -3,27 +3,35 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 
-const CALLBACK_URL = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-background-remover-tools.vercel.app'}/auth/callback`;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ai-background-remover-tools.vercel.app';
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+const CALLBACK_URL = `${APP_URL}/auth/callback`;
+
+function buildGoogleOAuthUrl() {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: CALLBACK_URL,
+    response_type: 'code',
+    scope: 'openid profile email',
+    access_type: 'offline',
+    prompt: 'consent',
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
 
 export function LoginClient() {
   const searchParams = useSearchParams();
   const [error, setError] = useState(searchParams.get('error') || '');
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useGoogleLogin({
-    flow: 'auth-code',
-    redirect_uri: CALLBACK_URL,
-    onSuccess: () => {
-      // This won't be called in redirect mode — user is redirected to callback page
-    },
-    onError: (error) => {
-      setError(error.error_description || 'Google login failed');
-    },
-  });
+  const handleGoogleLogin = () => {
+    setIsLoading(true);
+    // Direct redirect to Google OAuth
+    window.location.href = buildGoogleOAuthUrl();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,11 +60,11 @@ export function LoginClient() {
               </div>
             )}
 
-            {/* Google OAuth - redirect mode */}
+            {/* Google OAuth - direct redirect */}
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => login()}
+              onClick={handleGoogleLogin}
               disabled={isLoading}
             >
               {isLoading ? (
