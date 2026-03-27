@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
+import { Header } from '@/components/Header';
 
 export function LoginClient() {
   const searchParams = useSearchParams();
@@ -37,17 +38,10 @@ export function LoginClient() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="flex justify-between items-center py-6 px-4 md:px-8 max-w-7xl mx-auto">
-        <Link href="/" className="text-3xl font-bold text-gray-900">
-          RemoveBG
-        </Link>
-        <nav className="flex gap-4">
-          <Link href="/features" className="text-gray-600 hover:text-primary transition">Features</Link>
-          <Link href="/pricing" className="text-gray-600 hover:text-primary transition">Pricing</Link>
-          <Link href="/login" className="text-primary font-medium">Login</Link>
-        </nav>
-      </header>
+      {/* Shared Header */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <Header />
+      </div>
 
       {/* Login Form */}
       <main className="flex items-center justify-center py-16 px-4">

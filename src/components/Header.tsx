@@ -1,17 +1,23 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/authContext";
 import Image from "next/image";
 
 export function Header() {
+  const router = useRouter();
   const { user, loading, logout } = useAuth();
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   return (
     <header className="flex justify-between items-center py-6">
       <div className="text-2xl font-bold text-gray-900">
-        <Link href="/">AI Background Remover</Link>
+        <Link href="/">RemoveBG</Link>
       </div>
       <div className="flex gap-4 items-center">
         <Link href="/features">
@@ -45,7 +51,7 @@ export function Header() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={logout}
+              onClick={handleLogout}
             >
               Logout
             </Button>
