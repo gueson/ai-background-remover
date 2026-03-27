@@ -34,6 +34,11 @@ export function Header() {
           <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
         ) : user ? (
           <div className="flex items-center gap-3">
+            <Link href="/settings">
+              <Button variant="ghost" size="sm" className="text-gray-600">
+                Settings
+              </Button>
+            </Link>
             {user.avatar ? (
               <img 
                 src={user.avatar} 
