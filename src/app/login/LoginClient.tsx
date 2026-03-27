@@ -11,19 +11,20 @@ import { Header } from '@/components/Header';
 export function LoginClient() {
   const searchParams = useSearchParams();
   const [error, setError] = useState(searchParams.get('error') || '');
-  const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
 
   const handleGithubLogin = async () => {
-    setIsLoading(true);
+    setGithubLoading(true);
     setError('');
 
     if (!supabase) {
       setError('Supabase not configured. Please contact support.');
-      setIsLoading(false);
+      setGithubLoading(false);
       return;
     }
 
@@ -36,17 +37,17 @@ export function LoginClient() {
 
     if (error) {
       setError(error.message);
-      setIsLoading(false);
+      setGithubLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
+    setGoogleLoading(true);
     setError('');
 
     if (!supabase) {
       setError('Supabase not configured. Please contact support.');
-      setIsLoading(false);
+      setGoogleLoading(false);
       return;
     }
 
@@ -59,7 +60,7 @@ export function LoginClient() {
 
     if (error) {
       setError(error.message);
-      setIsLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -120,9 +121,9 @@ export function LoginClient() {
               variant="outline"
               className="w-full flex items-center justify-center gap-2"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={googleLoading}
             >
-              {isLoading ? (
+              {googleLoading ? (
                 'Redirecting...'
               ) : (
                 <>
@@ -142,9 +143,9 @@ export function LoginClient() {
               variant="outline"
               className="w-full flex items-center justify-center gap-2 mt-3"
               onClick={handleGithubLogin}
-              disabled={isLoading}
+              disabled={githubLoading}
             >
-              {isLoading ? (
+              {githubLoading ? (
                 'Redirecting...'
               ) : (
                 <>
