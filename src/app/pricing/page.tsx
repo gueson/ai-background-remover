@@ -1,19 +1,112 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { Header } from '@/components/Header';
+import { useAuth } from '@/lib/authContext';
+
+declare global {
+  interface Window {
+    paypal?: {
+      Buttons: (config: any) => { render: (selector: string) => void };
+    };
+  }
+}
 
 export default function PricingPage() {
+  const searchParams = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', message: '' });
+  const [paypalReady, setPaypalReady] = useState(false);
+  const [paypalError, setPaypalError] = useState('');
+  const [loadingPaypal, setLoadingPaypal] = useState(false);
+  const paypalContainerRef = useRef<HTMLDivElement>(null);
+  const paypalRendered = useRef(false);
+
+  const success = searchParams.get('success');
+  const canceled = searchParams.get('canceled');
 
   const showModal = (title: string, message: string) => {
     setModalContent({ title, message });
     setModalOpen(true);
   };
+
+  // Load PayPal JS SDK
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+    if (!clientId) {
+      console.log('PayPal Client ID not configured');
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client_id=${clientId}&currency=USD&intent=subscription`;
+    script.async = true;
+    script.onload = () => {
+      console.log('PayPal SDK loaded');
+      setPaypalReady(true);
+    };
+    script.onerror = () => {
+      console.error('Failed to load PayPal SDK');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup is handled by component unmount
+    };
+  }, []);
+
+  // Render PayPal button when SDK is ready
+  useEffect(() => {
+    if (!paypalReady || !window.paypal || paypalRendered.current || !paypalContainerRef.current) return;
+
+    const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
+    if (!planId) {
+      setPaypalError('Pro plan is not configured. Contact support.');
+      return;
+    }
+
+    paypalRendered.current = true;
+
+    window.paypal.Buttons({
+      style: {
+        layout: 'vertical',
+        color: 'blue',
+        shape: 'rect',
+        label: 'subscribe',
+        height: 45,
+      },
+      createSubscription: async (_data: any, actions: any) => {
+        setLoadingPaypal(true);
+        return actions.subscription.create({
+          plan_id: planId,
+          application_context: {
+            brand_name: 'RemoveBG',
+            user_action: 'SUBSCRIBE_NOW',
+          },
+        });
+      },
+      onApprove: async (_data: any, actions: any) => {
+        // Subscription approved - redirect to success
+        window.location.href = '/pricing?success=true&subscribed=true';
+        setLoadingPaypal(false);
+      },
+      onError: (err: any) => {
+        console.error('PayPal error:', err);
+        setPaypalError('Payment failed. Please try again.');
+        setLoadingPaypal(false);
+      },
+      onCancel: () => {
+        // User canceled - stay on pricing page
+        window.location.href = '/pricing?canceled=true';
+      },
+    }).render('#paypal-button-container');
+
+  }, [paypalReady]);
 
   const plans = [
     {
@@ -30,7 +123,9 @@ export default function PricingPage() {
       ],
       cta: 'Get Started',
       popular: false,
-      onCtaClick: () => showModal('Get Started', 'You can start using the tool immediately! No signup required. Your free plan includes 10 images per month.'),
+      onCtaClick: () => {
+        window.location.href = '/';
+      },
     },
     {
       name: 'Pro',
@@ -47,7 +142,7 @@ export default function PricingPage() {
       ],
       cta: 'Start Free Trial',
       popular: true,
-      onCtaClick: () => showModal('Pro Plan', 'Pro features are coming soon! This will include unlimited images, API access, and priority processing. Leave your email to get notified when it launches.'),
+      isPaypal: true,
     },
     {
       name: 'Enterprise',
@@ -64,7 +159,7 @@ export default function PricingPage() {
       ],
       cta: 'Contact Sales',
       popular: false,
-      onCtaClick: () => showModal('Enterprise', 'Enterprise solutions are available for organizations needing custom quotas, dedicated support, and on-premise deployment. Contact us for pricing.'),
+      onCtaClick: () => showModal('Enterprise', 'Enterprise solutions are available for organizations needing custom quotas, dedicated support, and on-premise deployment. Contact us for pricing at enterprise@removebg.example.com.'),
     },
   ];
 
@@ -96,6 +191,24 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <Header />
       </div>
+
+      {/* Success Banner */}
+      {success === 'true' && (
+        <div className="bg-green-50 border-b border-green-200 py-4 px-4 text-center">
+          <p className="text-green-700 font-medium">
+            ✅ Payment successful! Welcome to Pro. Your subscription is now active.
+          </p>
+        </div>
+      )}
+
+      {/* Canceled Banner */}
+      {canceled === 'true' && (
+        <div className="bg-yellow-50 border-b border-yellow-200 py-4 px-4 text-center">
+          <p className="text-yellow-700">
+            Payment was canceled. No charge was made.
+          </p>
+        </div>
+      )}
 
       {/* Hero */}
       <section className="text-center mx-auto max-w-3xl py-16 px-4">
@@ -153,13 +266,28 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                onClick={plan.onCtaClick}
-                className="w-full"
-                variant={plan.popular ? 'primary' : 'outline'}
-              >
-                {plan.cta}
-              </Button>
+
+              {plan.name === 'Pro' ? (
+                <div>
+                  {paypalError && (
+                    <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 text-center">
+                      {paypalError}
+                    </div>
+                  )}
+                  <div id="paypal-button-container" ref={paypalContainerRef} className={loadingPaypal ? 'opacity-50 pointer-events-none' : ''} />
+                  {loadingPaypal && (
+                    <p className="text-center text-sm text-gray-500 mt-2">Connecting to PayPal...</p>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  onClick={plan.onCtaClick}
+                  className="w-full"
+                  variant={plan.popular ? 'primary' : 'outline'}
+                >
+                  {plan.cta}
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -265,7 +393,7 @@ export default function PricingPage() {
 
       {/* Footer */}
       <footer className="py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
-        © {new Date().getFullYear()} AI Background Remover. All rights reserved.
+        © {new Date().getFullYear()} RemoveBG. All rights reserved.
       </footer>
     </div>
   );
