@@ -54,7 +54,9 @@ export const viewport = {
 export default function Home() {
   return (
     <>
-      <Header />
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <Header />
+      </div>
 
       {/* Value Proposition */}
       <section className="text-center mx-auto max-w-3xl py-12 px-4">

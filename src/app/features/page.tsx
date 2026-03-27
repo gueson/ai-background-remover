@@ -63,7 +63,9 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <Header />
+      </div>
 
       {/* Hero */}
       <section className="text-center mx-auto max-w-3xl py-16 px-4">
