@@ -32,6 +32,7 @@ export function LoginClient() {
       provider: 'github',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: 'select_account' },
       },
     });
 
@@ -55,6 +56,7 @@ export function LoginClient() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: 'select_account' },
       },
     });
 
