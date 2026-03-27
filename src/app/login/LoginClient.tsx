@@ -12,6 +12,10 @@ export function LoginClient() {
   const searchParams = useSearchParams();
   const [error, setError] = useState(searchParams.get('error') || '');
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -34,6 +38,38 @@ export function LoginClient() {
       setError(error.message);
       setIsLoading(false);
     }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setEmailLoading(true);
+
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      setEmailLoading(false);
+      return;
+    }
+
+    if (!supabase) {
+      setError('Supabase not configured. Please contact support.');
+      setEmailLoading(false);
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setEmailLoading(false);
+      return;
+    }
+
+    // Redirect to home on success
+    window.location.href = '/';
   };
 
   return (
@@ -88,13 +124,43 @@ export function LoginClient() {
               </div>
             </div>
 
-            {/* Email/Password form (placeholder for later) */}
-            <div className="text-center text-sm text-gray-500">
-              <p>Email/password login coming soon.</p>
-              <p className="mt-1">
-                Use <strong>Google login</strong> above to get started.
-              </p>
-            </div>
+            {/* Email/Password form */}
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 pr-10"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={emailLoading}
+              >
+                {emailLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
