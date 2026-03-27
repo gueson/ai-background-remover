@@ -45,12 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (session?.user) {
         const u = session.user;
+        const prov = u.app_metadata?.provider || 'email';
         setUser({
           id: u.id,
           email: u.email,
           name: u.user_metadata?.full_name || u.user_metadata?.name,
           avatar: u.user_metadata?.avatar_url,
-          provider: 'GOOGLE',
+          provider: prov.toUpperCase(),
         });
       }
       setLoading(false);
@@ -62,12 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const u = session.user;
+        const prov = u.app_metadata?.provider || 'email';
         setUser({
           id: u.id,
           email: u.email,
           name: u.user_metadata?.full_name || u.user_metadata?.name,
           avatar: u.user_metadata?.avatar_url,
-          provider: 'GOOGLE',
+          provider: prov.toUpperCase(),
         });
       } else {
         setUser(null);
