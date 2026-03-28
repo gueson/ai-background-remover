@@ -10,6 +10,7 @@ import { Header } from '@/components/Header';
 
 export function LoginClient() {
   const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const [error, setError] = useState(searchParams.get('error') || '');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
@@ -31,7 +32,7 @@ export function LoginClient() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
         queryParams: { prompt: 'select_account' },
       },
     });
@@ -55,7 +56,7 @@ export function LoginClient() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
         queryParams: { prompt: 'select_account' },
       },
     });
@@ -94,8 +95,8 @@ export function LoginClient() {
       return;
     }
 
-    // Redirect to home on success
-    window.location.href = '/';
+    // Redirect to original destination on success
+    window.location.href = redirectTo;
   };
 
   return (

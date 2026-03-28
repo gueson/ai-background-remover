@@ -18,6 +18,10 @@ export function CallbackClient() {
       }
 
       try {
+        // Extract redirect URL from query params before Supabase processes them
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get('redirect') || '/';
+
         // Get the session from Supabase callback URL (handled by Supabase SDK)
         const { data: { session }, error: supabaseError } = await supabase.auth.getSession();
         console.log('Callback: session received', !!session, session?.user?.email);
@@ -58,8 +62,8 @@ export function CallbackClient() {
           }));
         }
 
-        // Redirect to home page
-        router.push('/');
+        // Redirect to original destination (e.g. /pricing after OAuth from login)
+        router.push(redirectTo);
       } catch (err: any) {
         console.error('Auth callback error:', err);
         setError(err.message || 'Authentication failed');
