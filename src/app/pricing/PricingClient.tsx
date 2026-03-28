@@ -60,15 +60,12 @@ export function PricingPage() {
     };
   }, []);
 
+  // Pricing for inline plans (no pre-created Plan ID needed)
+  const PLAN_PRICE = process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRICE || '1.00'; // Default to $1 for sandbox testing
+
   // Render PayPal button when SDK is ready
   useEffect(() => {
     if (!paypalReady || !window.paypal || paypalRendered.current || !paypalContainerRef.current) return;
-
-    const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
-    if (!planId) {
-      setPaypalError('Pro plan is not configured. Contact support.');
-      return;
-    }
 
     paypalRendered.current = true;
 
@@ -82,11 +79,18 @@ export function PricingPage() {
       },
       createSubscription: async (_data: any, actions: any) => {
         setLoadingPaypal(true);
+        // Inline pricing - no Plan ID needed, price defined directly in code
         return actions.subscription.create({
-          plan_id: planId,
-          application_context: {
-            brand_name: 'RemoveBG',
-            user_action: 'SUBSCRIBE_NOW',
+          plan_type: 'TIERED',
+          plan: {
+            iterations: 12,
+            frequency: 'MONTH',
+            frequency_interval: 1,
+            pricing_scheme: {
+              fixed_price: { value: PLAN_PRICE, currency_code: 'USD' },
+            },
+            name: 'Pro Monthly',
+            description: 'Pro plan - Unlimited background removal',
           },
         });
       },
@@ -106,7 +110,7 @@ export function PricingPage() {
       },
     }).render('#paypal-button-container');
 
-  }, [paypalReady]);
+  }, [paypalReady, PLAN_PRICE]);
 
   const plans = [
     {
