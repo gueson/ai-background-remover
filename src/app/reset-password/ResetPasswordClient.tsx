@@ -19,20 +19,64 @@ export function ResetPasswordClient() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    // Check if there's a valid session from the reset link
+    if (!supabase) {
+      setError('Supabase not configured.');
+      return;
+    }
+
+    // Use onAuthStateChange to reliably detect session from URL hash token
+    // This handles the case where Supabase places the token in the URL hash
+    // during the password reset redirect flow
+    const supabaseClient = supabase;
+    let subscription: { unsubscribe: () => void } | null = null;
+
     const checkSession = async () => {
-      if (!supabase) {
-        setError('Supabase not configured.');
-        return;
-      }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Invalid or expired reset link. Please request a new one.');
-      } else {
+      // First try getSession (works if SDK already processed the hash)
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
         setReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    // If getSession didn't find session, set up listener for auth state changes
+    const setupListener = () => {
+      subscription = supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          if (session) {
+            setReady(true);
+            setError('');
+          }
+        }
+      }).data.subscription;
+    };
+
+    // Check session first, then setup listener if needed
+    checkSession().then((found) => {
+      if (!found) {
+        // Session not found via getSession, wait a moment for SDK to process hash
+        // and setup listener to catch the session
+        setupListener();
+        
+        // Also try getSession again after a short delay (handles race conditions)
+        setTimeout(async () => {
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session) {
+            setReady(true);
+          } else if (!ready) {
+            // Only show error if we haven't found a session yet
+            setError('Invalid or expired reset link. Please request a new one.');
+          }
+        }, 1000);
+      }
+    });
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
       }
     };
-    checkSession();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
