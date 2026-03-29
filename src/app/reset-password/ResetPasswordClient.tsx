@@ -68,6 +68,24 @@ export function ResetPasswordClient() {
     };
 
     const checkSession = async () => {
+      // Check URL hash for errors from Supabase redirect (error=access_denied, etc.)
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const hashError = hashParams.get('error');
+      const hashErrorDesc = hashParams.get('error_description');
+
+      if (hashError) {
+        // Clear the hash error from URL to keep UI clean
+        window.history.replaceState(null, '', window.location.pathname);
+        if (hashErrorDesc) {
+          setError(decodeURIComponent(hashErrorDesc.replace(/\+/g, ' ')));
+        } else if (hashError === 'otp_expired') {
+          setError('This reset link has expired. Please request a new one.');
+        } else {
+          setError('Reset link is invalid. Please request a new one.');
+        }
+        return false;
+      }
+
       // Check URL for token in query params (from custom email template flow)
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -80,6 +98,9 @@ export function ResetPasswordClient() {
           setReady(true);
           return true;
         }
+        // Token exchange failed
+        setError('This reset link is invalid or has expired. Please request a new one.');
+        return false;
       }
 
       // Fallback: try getSession (for hash-based token from original flow)
