@@ -24,14 +24,65 @@ export function ResetPasswordClient() {
       return;
     }
 
-    // Use onAuthStateChange to reliably detect session from URL hash token
-    // This handles the case where Supabase places the token in the URL hash
-    // during the password reset redirect flow
     const supabaseClient = supabase;
     let subscription: { unsubscribe: () => void } | null = null;
 
+    const exchangeTokenForSession = async (token: string) => {
+      // Call Supabase /verify endpoint to exchange the recovery token for a session
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=recovery`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+        },
+        body: JSON.stringify({
+          email: '', // Not needed when using token
+          token,
+          type: 'recovery',
+        }),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        return null;
+      }
+
+      // Set the session in Supabase client
+      const { data: sessionData, error } = await supabaseClient.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (error) {
+        console.error('setSession error:', error);
+        return null;
+      }
+
+      return sessionData.session;
+    };
+
     const checkSession = async () => {
-      // First try getSession (works if SDK already processed the hash)
+      // Check URL for token in query params (from custom email template flow)
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const type = urlParams.get('type');
+
+      if (token && type === 'recovery') {
+        // Exchange token for session
+        const session = await exchangeTokenForSession(token);
+        if (session) {
+          setReady(true);
+          return true;
+        }
+      }
+
+      // Fallback: try getSession (for hash-based token from original flow)
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         setReady(true);
@@ -40,7 +91,7 @@ export function ResetPasswordClient() {
       return false;
     };
 
-    // If getSession didn't find session, set up listener for auth state changes
+    // Set up auth state listener
     const setupListener = () => {
       subscription = supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
@@ -52,20 +103,14 @@ export function ResetPasswordClient() {
       }).data.subscription;
     };
 
-    // Check session first, then setup listener if needed
     checkSession().then((found) => {
       if (!found) {
-        // Session not found via getSession, wait a moment for SDK to process hash
-        // and setup listener to catch the session
         setupListener();
-        
-        // Also try getSession again after a short delay (handles race conditions)
         setTimeout(async () => {
           const { data: { session } } = await supabaseClient.auth.getSession();
           if (session) {
             setReady(true);
           } else if (!ready) {
-            // Only show error if we haven't found a session yet
             setError('Invalid or expired reset link. Please request a new one.');
           }
         }, 1000);
