@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       userEmail = result.data.user?.email || null;
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ai-background-remover-tools.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.background-remover-tools.online';
 
     // Create PayPal subscription
     const createRes = await fetch(`${PAYPAL_API_BASE}/v1/billing/subscriptions`, {
