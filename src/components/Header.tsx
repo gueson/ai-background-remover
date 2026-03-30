@@ -15,7 +15,7 @@ export function Header() {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await logout();
-    router.push('/login');
+    router.push('/');
   };
 
   // Close dropdown when clicking outside

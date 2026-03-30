@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('supabase_access_token');
     localStorage.removeItem('supabase_refresh_token');
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     setUser(null);
   };
 
