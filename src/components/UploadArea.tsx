@@ -22,14 +22,28 @@ export default function UploadArea() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load quota info and auth state on mount
+  // Load quota info and auth state on mount and when auth changes
   useEffect(() => {
-    getQuotaInfo().then(q => setQuota(q as any));
-    
-    // Check if user is logged in
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    const checkAuthAndQuota = async () => {
+      const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
       setIsLoggedIn(!!session);
-    });
+      
+      const q = await getQuotaInfo();
+      setQuota(q as any);
+    };
+    
+    checkAuthAndQuota();
+    
+    // Listen for auth changes (login/logout)
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+        checkAuthAndQuota();
+      });
+      
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
