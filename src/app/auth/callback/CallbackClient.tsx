@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export function CallbackClient() {
   const router = useRouter();
   const [error, setError] = useState('');
@@ -50,6 +52,54 @@ export function CallbackClient() {
         }
 
         console.log('Supabase user:', user?.email);
+
+        // Exchange Supabase token for our backend JWT
+        // This is required so backend APIs (quota, etc.) can authenticate the user
+        let backendToken: string | null = null;
+        try {
+          // Try using id_token first (may be Google ID token)
+          // Cast to any because TypeScript may not know about id_token on Session type
+          const sessionWithIdToken = session as any;
+          if (sessionWithIdToken.id_token) {
+            const backendRes = await fetch(`${API_URL}/api/auth/google`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: sessionWithIdToken.id_token }),
+            });
+            
+            if (backendRes.ok) {
+              const backendData = await backendRes.json();
+              if (backendData.success && backendData.data?.token) {
+                backendToken = backendData.data.token;
+                console.log('Backend JWT received via id_token');
+              }
+            }
+          }
+          
+          // Fallback: try supabase-exchange endpoint with access_token
+          if (!backendToken && session.access_token) {
+            const backendRes = await fetch(`${API_URL}/api/auth/supabase-exchange`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ access_token: session.access_token }),
+            });
+            
+            if (backendRes.ok) {
+              const backendData = await backendRes.json();
+              if (backendData.success && backendData.data?.token) {
+                backendToken = backendData.data.token;
+                console.log('Backend JWT received via supabase-exchange');
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to get backend JWT:', e);
+        }
+
+        // Store backend JWT if received
+        if (backendToken) {
+          localStorage.setItem('token', backendToken);
+        }
 
         // Store user info
         if (user) {
