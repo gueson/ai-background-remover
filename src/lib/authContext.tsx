@@ -91,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
+    // Notify other components that auth changed
+    window.dispatchEvent(new Event('auth:logout'));
   };
 
   return (

@@ -49,7 +49,7 @@ export default function UploadArea() {
       unsubscribe = () => subscription.unsubscribe();
     }
     
-    // Fallback: listen for localStorage changes (handles direct token removal)
+    // Listen for localStorage changes (handles direct token removal in same tab)
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'token' || e.key === 'supabase_access_token') {
         checkAuthAndQuota();
@@ -57,9 +57,16 @@ export default function UploadArea() {
     };
     window.addEventListener('storage', handleStorage);
     
+    // Listen for custom logout event (fallback when Supabase is not configured)
+    const handleLogout = () => {
+      checkAuthAndQuota();
+    };
+    window.addEventListener('auth:logout', handleLogout);
+    
     return () => {
       unsubscribe?.();
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('auth:logout', handleLogout);
     };
   }, []);
 
