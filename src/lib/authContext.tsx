@@ -83,6 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
+    // Notify other components FIRST - before signOut triggers onAuthStateChange
+    // This gives UploadArea a chance to check localStorage BEFORE Supabase's callback fires
+    window.dispatchEvent(new Event('auth:logout'));
+    
     if (supabase) {
       await supabase.auth.signOut();
     }
@@ -91,8 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
-    // Notify other components that auth changed
-    window.dispatchEvent(new Event('auth:logout'));
   };
 
   return (

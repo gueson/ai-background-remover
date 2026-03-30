@@ -172,7 +172,24 @@ export async function getQuotaInfo(): Promise<{
   dailyLimit: number;
   isPro: boolean;
 }> {
-  // Try registered user first
+  // CRITICAL: If no backend token exists in localStorage, user is anonymous
+  // This check is synchronous and immediate - no network calls
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  
+  if (!hasToken) {
+    // User is anonymous - use localStorage only
+    const anonQuota = checkAnonymousQuota();
+    return {
+      type: 'anonymous',
+      allowed: anonQuota.allowed,
+      remaining: anonQuota.remaining,
+      used: anonQuota.used,
+      dailyLimit: ANONYMOUS_DAILY_LIMIT,
+      isPro: false,
+    };
+  }
+  
+  // Has token - check registered user quota from backend
   const registeredQuota = await checkRegisteredQuota();
   if (registeredQuota) {
     return {
@@ -185,7 +202,7 @@ export async function getQuotaInfo(): Promise<{
     };
   }
   
-  // Fall back to anonymous
+  // Token exists but backend rejected it - treat as anonymous
   const anonQuota = checkAnonymousQuota();
   return {
     type: 'anonymous',

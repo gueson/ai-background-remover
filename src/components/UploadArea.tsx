@@ -22,9 +22,22 @@ export default function UploadArea() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Use ref to track logout state - persists across re-renders
+  const isLoggingOut = useRef(false);
+  
   // Load quota info and auth state on mount and when auth changes
   useEffect(() => {
     const checkAuthAndQuota = async () => {
+      // Skip if we're in logout process - avoid race conditions
+      if (isLoggingOut.current) {
+        // Force immediate check with current localStorage state
+        const q = await getQuotaInfo();
+        setQuota(q as any);
+        const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
+        setIsLoggedIn(!!session);
+        return;
+      }
+      
       // Check Supabase session if available
       let loggedIn = false;
       if (supabase) {
@@ -33,7 +46,7 @@ export default function UploadArea() {
       }
       setIsLoggedIn(loggedIn);
       
-      // Always re-check quota from localStorage/token
+      // Check quota from localStorage (synchronous check first)
       const q = await getQuotaInfo();
       setQuota(q as any);
     };
@@ -49,7 +62,7 @@ export default function UploadArea() {
       unsubscribe = () => subscription.unsubscribe();
     }
     
-    // Listen for localStorage changes (handles direct token removal in same tab)
+    // Listen for localStorage changes
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'token' || e.key === 'supabase_access_token') {
         checkAuthAndQuota();
@@ -57,9 +70,14 @@ export default function UploadArea() {
     };
     window.addEventListener('storage', handleStorage);
     
-    // Listen for custom logout event (fallback when Supabase is not configured)
-    const handleLogout = () => {
-      checkAuthAndQuota();
+    // Listen for custom logout event
+    const handleLogout = async () => {
+      isLoggingOut.current = true;
+      // Immediately check with current state
+      const q = await getQuotaInfo();
+      setQuota(q as any);
+      const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
+      setIsLoggedIn(!!session);
     };
     window.addEventListener('auth:logout', handleLogout);
     
