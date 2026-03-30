@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import ImagePreview from '@/components/ImagePreview';
 import { removeImageBackground } from '@/lib/backgroundRemoval';
 import { getQuotaInfo, recordUsage, QuotaInfo } from '@/lib/quota';
+import { supabase } from '@/lib/supabase';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -18,11 +19,17 @@ export default function UploadArea() {
   const [error, setError] = useState<string | null>(null);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load quota info on mount
+  // Load quota info and auth state on mount
   useEffect(() => {
     getQuotaInfo().then(q => setQuota(q as any));
+    
+    // Check if user is logged in
+    supabase?.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -217,10 +224,12 @@ export default function UploadArea() {
             </ul>
           </div>
           <div className="flex gap-3">
-            <Link href="/login" className="flex-1">
-              <Button variant="outline" className="w-full">Sign In</Button>
-            </Link>
-            <Link href="/pricing" className="flex-1">
+            {!isLoggedIn && (
+              <Link href="/login" className="flex-1">
+                <Button variant="outline" className="w-full">Sign In</Button>
+              </Link>
+            )}
+            <Link href="/pricing" className={isLoggedIn ? 'w-full' : 'flex-1'}>
               <Button className="w-full">View Plans</Button>
             </Link>
           </div>
