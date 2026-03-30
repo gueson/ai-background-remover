@@ -25,25 +25,42 @@ export default function UploadArea() {
   // Load quota info and auth state on mount and when auth changes
   useEffect(() => {
     const checkAuthAndQuota = async () => {
-      const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
-      setIsLoggedIn(!!session);
+      // Check Supabase session if available
+      let loggedIn = false;
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        loggedIn = !!session;
+      }
+      setIsLoggedIn(loggedIn);
       
+      // Always re-check quota from localStorage/token
       const q = await getQuotaInfo();
       setQuota(q as any);
     };
     
     checkAuthAndQuota();
     
-    // Listen for auth changes (login/logout)
+    // Listen for auth changes via Supabase
+    let unsubscribe: (() => void) | undefined;
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
         checkAuthAndQuota();
       });
-      
-      return () => {
-        subscription.unsubscribe();
-      };
+      unsubscribe = () => subscription.unsubscribe();
     }
+    
+    // Fallback: listen for localStorage changes (handles direct token removal)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === 'supabase_access_token') {
+        checkAuthAndQuota();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    
+    return () => {
+      unsubscribe?.();
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
