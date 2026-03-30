@@ -6,100 +6,70 @@ import { supabase } from '@/lib/supabase';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit, timeout = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export function CallbackClient() {
   const router = useRouter();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
       if (!supabase) {
         setError('Supabase not configured');
-        setLoading(false);
         return;
       }
 
       try {
-        // Extract redirect URL from query params before Supabase processes them
+        // Extract redirect URL from query params
         const urlParams = new URLSearchParams(window.location.search);
         const redirectTo = urlParams.get('redirect') || '/';
 
-        // Get the session from Supabase callback URL (handled by Supabase SDK)
-        const { data: { session }, error: supabaseError } = await supabase.auth.getSession();
-        console.log('Callback: session received', !!session, session?.user?.email);
+        // Get session and user in parallel (faster)
+        const [{ data: { session }, error: sessionError }, { data: { user } }] = await Promise.all([
+          supabase.auth.getSession(),
+          supabase.auth.getUser(),
+        ]);
 
-        if (supabaseError) {
-          throw new Error(supabaseError.message);
-        }
+        if (sessionError) throw new Error(sessionError.message);
+        if (!session) throw new Error('No session received');
 
-        if (!session) {
-          throw new Error('No session received from Supabase');
-        }
-
-        console.log('Supabase session received:', !!session.access_token);
-
-        // Store Supabase tokens in localStorage
+        // Store tokens immediately
         localStorage.setItem('supabase_access_token', session.access_token);
         if (session.refresh_token) {
           localStorage.setItem('supabase_refresh_token', session.refresh_token);
         }
 
-        // Get user info from Supabase
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError) {
-          throw new Error(userError.message);
-        }
-
-        console.log('Supabase user:', user?.email);
-
-        // Exchange Supabase token for our backend JWT
-        // This is required so backend APIs (quota, etc.) can authenticate the user
-        let backendToken: string | null = null;
-        try {
-          // Try using id_token first (may be Google ID token)
-          // Cast to any because TypeScript may not know about id_token on Session type
-          const sessionWithIdToken = session as any;
-          if (sessionWithIdToken.id_token) {
-            const backendRes = await fetch(`${API_URL}/api/auth/google`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: sessionWithIdToken.id_token }),
-            });
-            
-            if (backendRes.ok) {
-              const backendData = await backendRes.json();
-              if (backendData.success && backendData.data?.token) {
-                backendToken = backendData.data.token;
-                console.log('Backend JWT received via id_token');
-              }
-            }
-          }
-          
-          // Fallback: try supabase-exchange endpoint with access_token
-          if (!backendToken && session.access_token) {
-            const backendRes = await fetch(`${API_URL}/api/auth/supabase-exchange`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ access_token: session.access_token }),
-            });
-            
-            if (backendRes.ok) {
-              const backendData = await backendRes.json();
-              if (backendData.success && backendData.data?.token) {
-                backendToken = backendData.data.token;
-                console.log('Backend JWT received via supabase-exchange');
-              }
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to get backend JWT:', e);
-        }
-
-        // Store backend JWT if received
-        if (backendToken) {
-          localStorage.setItem('token', backendToken);
-        }
+        // Try to get backend JWT in parallel (id_token and access_token)
+        // Don't wait too long - user can still use the app
+        const sessionWithIdToken = session as any;
+        const idToken = sessionWithIdToken.id_token;
+        
+        const backendTokenPromise = Promise.any([
+          idToken
+            ? fetchWithTimeout(`${API_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: idToken }),
+              }).then(r => r.json()).then(d => d.success ? d.data?.token : null)
+            : Promise.resolve(null),
+          session.access_token
+            ? fetchWithTimeout(`${API_URL}/api/auth/supabase-exchange`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ access_token: session.access_token }),
+              }).then(r => r.json()).then(d => d.success ? d.data?.token : null)
+            : Promise.resolve(null),
+        ]).catch(() => null);
 
         // Store user info
         if (user) {
@@ -112,12 +82,21 @@ export function CallbackClient() {
           }));
         }
 
-        // Redirect to original destination (e.g. /pricing after OAuth from login)
+        // Try to get backend token (non-blocking, don't wait too long)
+        const token = await Promise.race([
+          backendTokenPromise,
+          new Promise<string | null>(resolve => setTimeout(() => resolve(null), 3000)),
+        ]);
+        
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+
+        // Redirect immediately - auth is complete
         router.push(redirectTo);
       } catch (err: any) {
         console.error('Auth callback error:', err);
         setError(err.message || 'Authentication failed');
-        setLoading(false);
       }
     };
 
@@ -141,16 +120,13 @@ export function CallbackClient() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Signing you in...</p>
-        </div>
+  // Loading state - minimal, just show spinner
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Signing you in...</p>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
