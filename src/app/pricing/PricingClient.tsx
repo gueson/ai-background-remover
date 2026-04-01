@@ -53,7 +53,7 @@ export function PricingPage() {
     }
 
     const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client_id=${clientId}&currency=USD&intent=subscription`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=subscription&vault=true`;
     script.async = true;
     script.onload = () => {
       console.log('PayPal SDK loaded');
