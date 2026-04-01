@@ -68,6 +68,7 @@ export function PricingPage() {
 
   // Pricing for inline plans (no pre-created Plan ID needed)
   const PLAN_PRICE = process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRICE || '1.00';
+  const PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
 
   // Render PayPal button when SDK is ready + user is authenticated
   useEffect(() => {
@@ -88,17 +89,7 @@ export function PricingPage() {
       createSubscription: async (_data: any, actions: any) => {
         setLoadingPaypal(true);
         return actions.subscription.create({
-          plan_type: 'TIERED',
-          plan: {
-            iterations: 12,
-            frequency: 'MONTH',
-            frequency_interval: 1,
-            pricing_scheme: {
-              fixed_price: { value: PLAN_PRICE, currency_code: 'USD' },
-            },
-            name: 'Pro Monthly',
-            description: 'Pro plan - Unlimited background removal',
-          },
+          plan_id: PLAN_ID,
         });
       },
       onApprove: async (_data: any, actions: any) => {
@@ -114,7 +105,7 @@ export function PricingPage() {
         window.location.href = '/pricing?canceled=true';
       },
     }).render('#paypal-button-container');
-  }, [paypalReady, user, PLAN_PRICE]);
+  }, [paypalReady, user, PLAN_PRICE, PLAN_ID]);
 
   const handleProClick = () => {
     if (authLoading) {
@@ -145,17 +136,7 @@ export function PricingPage() {
           createSubscription: async (_data: any, actions: any) => {
             setLoadingPaypal(true);
             return actions.subscription.create({
-              plan_type: 'TIERED',
-              plan: {
-                iterations: 12,
-                frequency: 'MONTH',
-                frequency_interval: 1,
-                pricing_scheme: {
-                  fixed_price: { value: PLAN_PRICE, currency_code: 'USD' },
-                },
-                name: 'Pro Monthly',
-                description: 'Pro plan - Unlimited background removal',
-              },
+              plan_id: PLAN_ID,
             });
           },
           onApprove: async (_data: any, actions: any) => {
@@ -173,7 +154,7 @@ export function PricingPage() {
         }).render('#paypal-button-container');
       }
     }
-  }, [authLoading, user, paypalReady, PLAN_PRICE]);
+  }, [authLoading, user, paypalReady, PLAN_PRICE, PLAN_ID]);
 
   const plans = [
     {
