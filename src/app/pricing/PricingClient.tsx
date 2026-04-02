@@ -75,9 +75,14 @@ export function PricingPage() {
     if (!paypalReady || !window.paypal || !paypalContainerRef.current) return;
     if (!user) return; // Wait for user to be logged in
     if (paypalRendered.current) return; // Already rendered
+    if (!PLAN_ID) {
+      setPaypalError('PayPal plan is not configured. Please contact support.');
+      return;
+    }
 
     paypalRendered.current = true;
 
+    // Use server-side subscription creation for better stability and error handling
     window.paypal.Buttons({
       style: {
         layout: 'vertical',
@@ -88,9 +93,25 @@ export function PricingPage() {
       },
       createSubscription: async (_data: any, actions: any) => {
         setLoadingPaypal(true);
-        return actions.subscription.create({
-          plan_id: PLAN_ID,
-        });
+        try {
+          const res = await fetch('/api/paypal/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planId: PLAN_ID }),
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            throw new Error(result.error || 'Failed to create subscription');
+          }
+          // Redirect to PayPal approval URL
+          window.location.href = result.approvalUrl;
+          return result.subscriptionId;
+        } catch (err: any) {
+          console.error('Subscription error:', err);
+          setPaypalError(err.message || 'Failed to start subscription. Please try again.');
+          setLoadingPaypal(false);
+          throw err;
+        }
       },
       onApprove: async (_data: any, actions: any) => {
         window.location.href = '/pricing?success=true&subscribed=true';
@@ -98,7 +119,7 @@ export function PricingPage() {
       },
       onError: (err: any) => {
         console.error('PayPal error:', err);
-        setPaypalError('Payment failed. Please try again.');
+        setPaypalError('Payment failed. Please try again or contact support.');
         setLoadingPaypal(false);
       },
       onCancel: () => {
@@ -135,9 +156,24 @@ export function PricingPage() {
           },
           createSubscription: async (_data: any, actions: any) => {
             setLoadingPaypal(true);
-            return actions.subscription.create({
-              plan_id: PLAN_ID,
-            });
+            try {
+              const res = await fetch('/api/paypal/create-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planId: PLAN_ID }),
+              });
+              const result = await res.json();
+              if (!res.ok) {
+                throw new Error(result.error || 'Failed to create subscription');
+              }
+              window.location.href = result.approvalUrl;
+              return result.subscriptionId;
+            } catch (err: any) {
+              console.error('Subscription error:', err);
+              setPaypalError(err.message || 'Failed to start subscription. Please try again.');
+              setLoadingPaypal(false);
+              throw err;
+            }
           },
           onApprove: async (_data: any, actions: any) => {
             window.location.href = '/pricing?success=true&subscribed=true';
@@ -145,7 +181,7 @@ export function PricingPage() {
           },
           onError: (err: any) => {
             console.error('PayPal error:', err);
-            setPaypalError('Payment failed. Please try again.');
+            setPaypalError('Payment failed. Please try again or contact support.');
             setLoadingPaypal(false);
           },
           onCancel: () => {
