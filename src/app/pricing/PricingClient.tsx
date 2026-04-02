@@ -166,6 +166,8 @@ export function PricingPage() {
               if (!res.ok) {
                 throw new Error(result.error || 'Failed to create subscription');
               }
+              // Store subscription ID for confirm after PayPal approval
+              sessionStorage.setItem('pendingSubscriptionId', result.subscriptionId);
               window.location.href = result.approvalUrl;
               return result.subscriptionId;
             } catch (err: any) {
@@ -191,6 +193,29 @@ export function PricingPage() {
       }
     }
   }, [authLoading, user, paypalReady, PLAN_PRICE, PLAN_ID]);
+
+  // When success=true (returned from PayPal), confirm subscription to activate PRO
+  useEffect(() => {
+    if (success === 'true') {
+      const subscriptionId = sessionStorage.getItem('pendingSubscriptionId');
+      if (subscriptionId) {
+        sessionStorage.removeItem('pendingSubscriptionId');
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/subscription/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paypalSubscriptionId: subscriptionId }),
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            console.log('PRO activated via confirm');
+          } else {
+            console.log('Confirm returned:', data.error);
+          }
+        }).catch(err => {
+          console.error('Confirm error:', err);
+        });
+      }
+    }
+  }, [success]);
 
   const plans = [
     {

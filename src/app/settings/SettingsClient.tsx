@@ -28,6 +28,13 @@ export function SettingsClient() {
   const [passwordMsg, setPasswordMsg] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // Subscription state
+  const [subscriptionData, setSubscriptionData] = useState<{
+    plan: string;
+    status: string;
+    quota: { monthly: number | null; used: number; remaining: number | null };
+  } | null>(null);
+
   // Delete account
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleteSaving, setDeleteSaving] = useState(false);
@@ -49,6 +56,24 @@ export function SettingsClient() {
       setName(u.user_metadata?.full_name || u.user_metadata?.name || '');
       setAvatarUrl(u.user_metadata?.avatar_url || '');
       setLoading(false);
+
+      // Fetch subscription data from backend
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('supabase_access_token');
+        if (token) {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/subscription`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const result = await res.json();
+            if (result.success && result.data) {
+              setSubscriptionData(result.data);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load subscription:', err);
+      }
     };
     loadUser();
   }, [router]);
@@ -347,24 +372,38 @@ export function SettingsClient() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium text-gray-900">Current Plan</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">Free</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">
+                        {subscriptionData?.plan || 'FREE'}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">$0 / forever</p>
-                      <p className="text-xs text-gray-400 mt-1">10 images / month</p>
+                      <p className="text-sm text-gray-500">
+                        {subscriptionData?.status === 'ACTIVE' && subscriptionData.plan === 'PRO'
+                          ? '$9 / month'
+                          : subscriptionData?.status === 'ACTIVE' && subscriptionData.plan === 'ENTERPRISE'
+                          ? 'Custom'
+                          : '$0 / forever'}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {subscriptionData?.quota?.monthly === null
+                          ? 'Unlimited images / month'
+                          : `${subscriptionData?.quota?.remaining ?? 10} images / month remaining`}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2">Upgrade to Pro</h3>
-                  <p className="text-sm text-gray-500 mb-3">
-                    Get unlimited image processing, HD quality output, priority processing, and API access.
-                  </p>
-                  <Link href="/pricing">
-                    <Button>View Plans</Button>
-                  </Link>
-                </div>
+                {(!subscriptionData || subscriptionData.plan === 'FREE') && (
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="font-medium text-gray-900 mb-2">Upgrade to Pro</h3>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Get unlimited image processing, HD quality output, priority processing, and API access.
+                    </p>
+                    <Link href="/pricing">
+                      <Button>View Plans</Button>
+                    </Link>
+                  </div>
+                )}
 
                 <div className="p-4 border border-red-200 rounded-lg bg-red-50">
                   <h3 className="font-medium text-red-700 mb-2">Danger Zone</h3>

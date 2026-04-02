@@ -172,11 +172,12 @@ export async function getQuotaInfo(): Promise<{
   dailyLimit: number;
   isPro: boolean;
 }> {
-  // CRITICAL: If no backend token exists in localStorage, user is anonymous
-  // This check is synchronous and immediate - no network calls
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  // Check both backend token AND supabase token - either means user is logged in
+  const hasBackendToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  const hasSupabaseToken = typeof window !== 'undefined' && !!localStorage.getItem('supabase_access_token');
+  const isLoggedIn = hasBackendToken || hasSupabaseToken;
   
-  if (!hasToken) {
+  if (!isLoggedIn) {
     // User is anonymous - use localStorage only
     const anonQuota = checkAnonymousQuota();
     return {
