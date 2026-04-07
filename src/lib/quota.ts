@@ -107,7 +107,10 @@ export async function checkRegisteredQuota(): Promise<QuotaInfo | null> {
   if (typeof window === 'undefined') return null;
   
   try {
-    const token = localStorage.getItem('token');
+    // Prefer backend JWT, but fall back to Supabase token if missing
+    const backendToken = localStorage.getItem('token');
+    const supabaseToken = localStorage.getItem('supabase_access_token');
+    const token = backendToken || supabaseToken;
     if (!token) return null;
     
     const response = await fetch(`${API_URL}/api/quota`, {
