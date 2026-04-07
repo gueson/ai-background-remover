@@ -193,12 +193,10 @@ export default function UploadArea() {
 
           const result = await response.json();
           // result.data.resultUrl is a data URL (data:image/png;base64,...)
-          const binary = atob(result.data.resultUrl.split(',')[1]);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-          }
-          resolve(new Blob([bytes], { type: 'image/png' }));
+          // Use fetch to convert data URL to Blob reliably (avoids atob Unicode issues)
+          const blobResponse = await fetch(result.data.resultUrl);
+          const blob = await blobResponse.blob();
+          resolve(blob);
         } catch (e) {
           reject(e);
         }
