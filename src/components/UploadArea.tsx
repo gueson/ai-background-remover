@@ -82,6 +82,7 @@ export default function UploadArea() {
       setOriginalImage(null);
       setProcessedImage(null);
       setError(null);
+      setShowQuotaModal(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
