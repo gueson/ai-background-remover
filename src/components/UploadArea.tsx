@@ -73,11 +73,15 @@ export default function UploadArea() {
     // Listen for custom logout event
     const handleLogout = async () => {
       isLoggingOut.current = true;
-      // Immediately check with current state
+      // Clear tokens BEFORE checking quota - otherwise getQuotaInfo sees stale registered state
+      localStorage.removeItem('supabase_access_token');
+      localStorage.removeItem('supabase_refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      // Now getQuotaInfo will correctly return anonymous quota
       const q = await getQuotaInfo();
       setQuota(q as any);
-      const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
-      setIsLoggedIn(!!session);
+      setIsLoggedIn(false);
       // Clear image state on logout
       setOriginalImage(null);
       setProcessedImage(null);
