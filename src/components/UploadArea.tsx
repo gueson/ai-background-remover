@@ -78,6 +78,13 @@ export default function UploadArea() {
       setQuota(q as any);
       const { data: { session } } = await supabase?.auth.getSession() || { data: { session: null } };
       setIsLoggedIn(!!session);
+      // Clear image state on logout
+      setOriginalImage(null);
+      setProcessedImage(null);
+      setError(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     };
     window.addEventListener('auth:logout', handleLogout);
     
