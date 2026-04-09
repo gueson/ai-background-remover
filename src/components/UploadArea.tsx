@@ -180,22 +180,77 @@ export default function UploadArea() {
     }
   };
 
+  // Compress image before upload to reduce transfer time
+  // Uses canvas resize (max 1500px) + WebP/JPEG at 85% — same quality as backend sharp processing
+  const compressImageForUpload = async (file: File): Promise<{ blob: Blob; originalSize: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIMENSION = 1500;
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if larger than 1500px (same logic as backend sharp)
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Prefer WebP (better quality/size ratio, supports transparency)
+        // Fall back to JPEG for browsers that don't support WebP
+        const supportsWebP = canvas.toDataURL('image/webp').startsWith('data:image/webp');
+        const mimeType = supportsWebP ? 'image/webp' : 'image/jpeg';
+        const quality = 0.85;
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve({ blob, originalSize: file.size });
+            } else {
+              reject(new Error('Canvas compression failed'));
+            }
+          },
+          mimeType,
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   // Call backend AI processing for PRO users
   const processWithAI = async (file: File): Promise<Blob> => {
+    // Compress before upload to drastically reduce transfer time
+    // Compression params match backend sharp (1500px max, 85% quality)
+    const { blob: compressedBlob, originalSize } = await compressImageForUpload(file);
+    console.log(`[UploadArea] Compressed ${(originalSize / 1024).toFixed(0)}KB → ${(compressedBlob.size / 1024).toFixed(0)}KB before upload`);
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const base64 = (reader.result as string).split(',')[1];
           const token = localStorage.getItem('supabase_access_token');
-          
+          // Use JPEG for transmission — backend sharp converts to JPEG anyway
           const response = await fetch(`${API_URL}/api/process`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ image: `data:${file.type};base64,${base64}` }),
+            body: JSON.stringify({ image: `data:image/jpeg;base64,${base64}` }),
           });
 
           if (!response.ok) {
