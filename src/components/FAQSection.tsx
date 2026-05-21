@@ -9,32 +9,32 @@ interface FAQItem {
 
 const faqData: FAQItem[] = [
   {
-    question: "这个工具如何保护我的隐私？",
-    answer: "所有图像处理都在您的浏览器本地完成，图片不会上传到任何服务器。我们不会收集、存储或传输您的任何数据。"
+    question: "How does this tool protect my privacy?",
+    answer: "All image processing is done locally in your browser. Your images never leave your device and are never uploaded to any server. We do not collect, store, or transmit any of your data."
   },
   {
-    question: "支持哪些图片格式？",
-    answer: "支持 PNG、JPG、JPEG、WEBP 等常见格式。最大支持 10MB 的图片。"
+    question: "What image formats are supported?",
+    answer: "We support common formats including PNG, JPG, JPEG, and WEBP. Maximum file size is 10MB."
   },
   {
-    question: "处理速度有多快？",
-    answer: "大多数图片在 2-5 秒内完成处理，具体速度取决于图片大小和您的设备性能。"
+    question: "How fast is the processing?",
+    answer: "Most images are processed in 2-5 seconds. Speed depends on image size and your device performance."
   },
   {
-    question: "需要注册账号吗？",
-    answer: "完全不需要。我们坚持无账户、无追踪的纯粹体验，打开网页即可使用。"
+    question: "Do I need to register an account?",
+    answer: "No registration required. We maintain an account-free, tracking-free experience. Just open the website and start using."
   },
   {
-    question: "处理后的图片可以下载吗？",
-    answer: "可以。处理完成后会自动显示透明背景的 PNG 图片，您可以点击下载按钮保存到本地。"
+    question: "Can I download the processed images?",
+    answer: "Yes. After processing, your image with transparent background is displayed. Click the download button to save it locally."
   },
   {
-    question: "是否支持批量处理？",
-    answer: "目前每次只能处理一张图片。批量处理功能正在开发中，敬请期待。"
+    question: "Does it support batch processing?",
+    answer: "Currently, only single image processing is supported. Batch processing is under development. Stay tuned!"
   },
   {
-    question: "如果处理失败怎么办？",
-    answer: "请确保图片尺寸适中且格式正确。如果问题持续，请尝试刷新页面或使用其他浏览器。"
+    question: "What should I do if processing fails?",
+    answer: "Please ensure your image has appropriate dimensions and format. If problems persist, try refreshing the page or using a different browser."
   }
 ];
 
@@ -48,7 +48,7 @@ export default function FAQSection() {
   return (
     <section className="py-16 px-4 md:px-8 max-w-4xl mx-auto">
       <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-        常见问题
+        Frequently Asked Questions
       </h2>
       <div className="space-y-4">
         {faqData.map((faq, index) => (

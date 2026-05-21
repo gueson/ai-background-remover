@@ -3,8 +3,26 @@ import { Metadata } from 'next';
 import { PricingPage } from './PricingClient';
 
 export const metadata: Metadata = {
-  title: 'Pricing – RemoveBG',
-  description: 'Simple, transparent pricing for RemoveBG. Start free, upgrade when you need more.',
+  title: 'Pricing - AI Background Remover | Free and Premium Plans',
+  description: 'Simple, transparent pricing for AI Background Remover. Start free with basic features, upgrade to premium for advanced capabilities. No hidden fees, cancel anytime.',
+  keywords: [
+    'background remover pricing',
+    'AI background remover cost',
+    'image editing pricing',
+    'free background remover',
+    'premium background remover',
+    'subscription plans',
+    'image processing pricing',
+  ],
+  openGraph: {
+    title: 'Pricing - AI Background Remover',
+    description: 'Simple, transparent pricing. Start free, upgrade when you need more.',
+    url: 'https://www.background-remover-tools.online/pricing',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 function LoadingFallback() {

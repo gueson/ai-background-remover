@@ -4,8 +4,26 @@ import { Button } from '@/components/ui';
 import { Header } from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'Features – AI Background Remover',
-  description: 'Discover the powerful features of our AI-powered background removal tool.',
+  title: 'Features - AI Background Remover | Powerful Image Background Removal',
+  description: 'Discover the powerful features of our AI background remover. Lightning-fast processing, 100% privacy protection, cross-platform compatibility, and more. Remove backgrounds instantly in your browser.',
+  keywords: [
+    'AI background remover features',
+    'background remover tool features',
+    'online image editing features',
+    'client-side image processing',
+    'privacy-focused image editing',
+    'fast background removal',
+    'AI-powered image editing',
+  ],
+  openGraph: {
+    title: 'Features - AI Background Remover',
+    description: 'Discover the powerful features of our AI-powered background removal tool.',
+    url: 'https://www.background-remover-tools.online/features',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function FeaturesPage() {
@@ -189,7 +207,13 @@ export default function FeaturesPage() {
 
       {/* Footer */}
       <footer className="py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
-        © {new Date().getFullYear()} AI Background Remover. All rights reserved.
+        <div className="flex flex-wrap justify-center gap-6 mb-4">
+          <Link href="/privacy-policy" className="hover:text-gray-900">Privacy Policy</Link>
+          <Link href="/terms-of-service" className="hover:text-gray-900">Terms of Service</Link>
+          <Link href="/cookie-policy" className="hover:text-gray-900">Cookie Policy</Link>
+        </div>
+        <p>© {new Date().getFullYear()} AI Background Remover. All rights reserved.</p>
+        <p className="mt-2">Contact: <a href="mailto:support@background-remover-tools.online" className="text-blue-600">support@background-remover-tools.online</a></p>
       </footer>
     </div>
   );

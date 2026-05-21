@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 import { Header } from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
 import ImagePreview from "@/components/ImagePreview";
@@ -9,42 +10,54 @@ import FAQSection from "@/components/FAQSection";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Background Remover – Remove Backgrounds Online",
-  description: "Privacy-first image background removal. Upload photos directly in your browser – no uploads, no tracking, 100% client-side processing.",
+  title: "AI Background Remover - Remove Image Backgrounds Online Free",
+  description: "Free AI-powered background remover. Remove image backgrounds instantly in your browser. 100% privacy - no uploads, no tracking, all processing done client-side. Fast, secure, and completely free to use.",
   keywords: [
-    "background remover",
-    "image processing",
-    "privacy-focused",
-    "client-side AI",
-    "AI tools",
-    "fast image editing",
+    "free background remover",
+    "remove background online",
+    "AI background remover free",
+    "online background remover",
+    "remove bg online",
+    "transparent background maker",
+    "image background remover",
+    "privacy-focused image editing",
+    "client-side image processing",
+    "AI image editing",
   ],
   openGraph: {
-    title: "AI Background Remover",
-    description: "Remove image backgrounds instantly in your browser",
+    title: "AI Background Remover - Free Online Background Removal",
+    description: "Remove image backgrounds instantly with AI. 100% privacy protection - all processing in your browser.",
+    url: "https://www.background-remover-tools.online/",
     images: [
       {
-        url: "",
+        url: "https://www.background-remover-tools.online/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "AI Background Remover – Remove Backgrounds Online",
+        alt: "AI Background Remover - Remove Image Backgrounds Online",
+        type: "image/jpeg",
       },
     ],
   },
   twitter: {
-    card: "summary",
-    title: "AI Background Remover",
-    description: "Privacy-first image background removal",
+    card: "summary_large_image",
+    title: "AI Background Remover - Free Online Background Removal",
+    description: "AI-powered background remover with complete privacy. All processing happens in your browser.",
     images: [
       {
-        url: "",
+        url: "https://www.background-remover-tools.online/twitter-image.jpg",
         width: 1200,
         height: 630,
-        alt: "AI Background Remover – Remove Backgrounds Online",
+        alt: "AI Background Remover",
+        type: "image/jpeg",
       },
     ],
   },
-  themeColor: "hsl(var(--primary))",
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+  },
 };
 
 export const viewport = {
@@ -120,7 +133,13 @@ export default function Home() {
       <FAQSection />
 
       <footer className="mt-16 py-8 px-6 text-center text-sm text-gray-600 border-t border-gray-200 max-w-7xl mx-auto">
-        © {new Date().getFullYear()} AI Background Remover. All rights reserved.
+        <div className="flex flex-wrap justify-center gap-6 mb-4">
+          <Link href="/privacy-policy" className="hover:text-gray-900">Privacy Policy</Link>
+          <Link href="/terms-of-service" className="hover:text-gray-900">Terms of Service</Link>
+          <Link href="/cookie-policy" className="hover:text-gray-900">Cookie Policy</Link>
+        </div>
+        <p>© {new Date().getFullYear()} AI Background Remover. All rights reserved.</p>
+        <p className="mt-2">Contact: <a href="mailto:support@background-remover-tools.online" className="text-blue-600">support@background-remover-tools.online</a></p>
       </footer>
     </>
   );

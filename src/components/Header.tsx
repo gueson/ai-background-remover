@@ -31,8 +31,8 @@ export function Header() {
 
   return (
     <header className="flex justify-between items-center py-6">
-      <div className="text-2xl font-bold text-gray-900">
-        <Link href="/">RemoveBG</Link>
+      <div className="text-xl md:text-2xl font-bold text-gray-900">
+        <Link href="/">AI Background Remover</Link>
       </div>
       <div className="flex gap-4 items-center">
         <Link href="/features">
@@ -40,9 +40,6 @@ export function Header() {
         </Link>
         <Link href="/pricing">
           <Button variant="ghost" size="sm">Pricing</Button>
-        </Link>
-        <Link href="/login">
-          <Button variant="ghost" size="sm">API</Button>
         </Link>
         
         {loading ? (
