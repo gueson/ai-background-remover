@@ -1,6 +1,0 @@
-{
-  "analytics": {
-    "enabled": true
-  },
-  "buildCommand": "npm run build"
-}
